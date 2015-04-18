@@ -36,7 +36,7 @@ public class ChatHeadService extends Service {
 
     private Map<String, Integer> activityTime;
     private Map<String, Integer> firstActivatedActivityTime;
-    public static final String[] badPrograms = new String[] {"Messenger","Facebook","Tinder", "Hangouts"};
+    public static String[] badPrograms = new String[] {"Messenger","Facebook","Tinder", "Hangouts"};
 
     private Handler autonomousHandler;
     private AnimationDrawable bombOmbAnimation;
