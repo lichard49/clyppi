@@ -1,10 +1,9 @@
 package com.lichard49.boardclip;
 
-import android.app.ActivityManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
@@ -24,11 +23,12 @@ import java.util.Map;
 public class ChatHeadService extends Service {
     private WindowManager windowManager;
     private ImageView chatHead;
-
     private WindowManager.LayoutParams params;
     private Handler checkActivityHandler;
 
     private Map<String, Integer> activityTime;
+
+    private Handler autonomousHandler;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -40,6 +40,9 @@ public class ChatHeadService extends Service {
         super.onCreate();
         Log.d("hi", "bye");
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+        autonomousHandler = new Handler();
+        autonomousHandler.postDelayed(moveAutonomous, 10);
 
         chatHead = new ImageView(this);
         chatHead.setImageResource(R.drawable.marioicon);
@@ -65,6 +68,34 @@ public class ChatHeadService extends Service {
         activityTime = new HashMap<String, Integer>();
     }
 
+    enum Direction { UP, LEFT, RIGHT, DOWN };
+    private Runnable moveAutonomous = new Runnable()
+    {
+        private Direction direction = Direction.RIGHT;
+        @Override
+        public void run()
+        {
+            if(params.x > windowManager.getDefaultDisplay().getWidth()-chatHead.getWidth()
+                    && direction == Direction.RIGHT) direction = Direction.DOWN;
+            else if(params.y > windowManager.getDefaultDisplay().getHeight()-chatHead.getHeight()
+                    && direction == Direction.DOWN) direction = Direction.LEFT;
+            else if(params.x < 0 && direction == Direction.LEFT) direction = Direction.UP;
+            else if(params.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
+
+            switch(direction)
+            {
+                case UP: params.y -= 10; break;
+                case LEFT: params.x -= 10; break;
+                case RIGHT: params.x += 10; break;
+                case DOWN: params.y += 10; break;
+            }
+
+            windowManager.updateViewLayout(chatHead, params);
+            //Log.d("hiii", params.x+"");
+            autonomousHandler.postDelayed(this, 10);
+        }
+    };
+
     private View.OnTouchListener moveChatHead = new View.OnTouchListener() {
         private int initialX;
         private int initialY;
@@ -72,13 +103,13 @@ public class ChatHeadService extends Service {
         private float initialTouchY;
 
         @Override public boolean onTouch(View v, MotionEvent event) {
-            ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+            //ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            //List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
 
-            Log.i("hiii", "about to list " + appProcesses.size() + " apps");
+            //Log.i("hiii", "about to list " + appProcesses.size() + " apps");
             //for(ActivityManager.RunningAppProcessInfo a: appProcesses) {
 //                if(a.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                    Log.i("hiii", "app: " + appProcesses.get(0).processName);
+                    //Log.i("hiii", "app: " + appProcesses.get(0).processName);
 //                }
 //            }
             Log.i("hiii", "done");
