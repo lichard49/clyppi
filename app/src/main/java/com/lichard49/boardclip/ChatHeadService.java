@@ -59,7 +59,7 @@ public class ChatHeadService extends Service {
         autonomousHandler.postDelayed(moveAutonomous, 10);
 
         chatHead = new ImageView(this);
-        chatHead.setBackgroundResource(R.drawable.bombomb0);
+        chatHead.setBackgroundResource(R.drawable.bombomb180);
         bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
         chatHead.post(new Runnable() {
             @Override
@@ -148,10 +148,62 @@ public class ChatHeadService extends Service {
                 else if (chatParams.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
 
                 switch (direction) {
-                    case UP: chatParams.y -= 10; textParams.y -= 10; break;
-                    case LEFT: chatParams.x -= 10; textParams.x -=10; break;
-                    case RIGHT: chatParams.x += 10; textParams.x += 10; break;
-                    case DOWN: chatParams.y += 10; textParams.y += 10; break;
+                    case UP:
+                        chatParams.y -= 10;
+                        textParams.y -= 10;
+                        chatHead.setBackgroundResource(R.drawable.bombomb90);
+                        bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
+                        chatHead.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                AnimationDrawable frameAnimation =
+                                        (AnimationDrawable) chatHead.getBackground();
+                                frameAnimation.start();
+                            }
+                        });
+                        break;
+                    case LEFT:
+                        chatParams.x -= 10;
+                        textParams.x -=10;
+                        chatHead.setBackgroundResource(R.drawable.bombomb0);
+                        bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
+                        chatHead.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                AnimationDrawable frameAnimation =
+                                        (AnimationDrawable) chatHead.getBackground();
+                                frameAnimation.start();
+                            }
+                        });
+                        break;
+                    case RIGHT:
+                        chatParams.x += 10;
+                        textParams.x += 10;
+                        chatHead.setBackgroundResource(R.drawable.bombomb180);
+                        bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
+                        chatHead.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                AnimationDrawable frameAnimation =
+                                        (AnimationDrawable) chatHead.getBackground();
+                                frameAnimation.start();
+                            }
+                        });
+                        break;
+                    case DOWN:
+                        chatParams.y += 10;
+                        textParams.y += 10;
+                        chatHead.setBackgroundResource(R.drawable.bombomb270);
+                        bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
+                        chatHead.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                AnimationDrawable frameAnimation =
+                                        (AnimationDrawable) chatHead.getBackground();
+                                frameAnimation.start();
+                            }
+                        });
+                        break;
                 }
 
                 windowManager.updateViewLayout(chatHead, chatParams);
@@ -222,7 +274,7 @@ public class ChatHeadService extends Service {
                     if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
                         if (timeDiff == 10) {
                             Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
-                            textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                            textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " CONSECUATIVE SECONDS");
                         } else if (timeDiff >= 30 && timeDiff % 5 == 0) {
                             textBubble.setText("CLOSE THE DAMN APP.");
                             if (mBound) {
