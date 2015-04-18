@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -34,7 +35,7 @@ public class ChatHeadService extends Service {
     public static final String[] badPrograms = new String[] {"Messenger","Facebook","Tinder", "Hangouts"};
 
     private Handler autonomousHandler;
-
+    private AnimationDrawable bombOmbAnimation;
     @Override
     public IBinder onBind(Intent intent) {
         // Not used
@@ -50,7 +51,17 @@ public class ChatHeadService extends Service {
         autonomousHandler.postDelayed(moveAutonomous, 10);
 
         chatHead = new ImageView(this);
-        chatHead.setImageResource(R.drawable.marioicon);
+        chatHead.setBackgroundResource(R.drawable.bombomb0);
+        bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
+        chatHead.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                AnimationDrawable frameAnimation =
+                                        (AnimationDrawable) chatHead.getBackground();
+                                frameAnimation.start();
+                            }
+                        });
+
 
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -139,6 +150,7 @@ public class ChatHeadService extends Service {
 
     private Runnable checkActivity = new Runnable()
     {
+        //bombOmbAnimation.start();
         String previousActivity = null;
         @Override
         public void run()
