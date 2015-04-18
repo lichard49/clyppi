@@ -28,7 +28,8 @@ public class ChatHeadService extends Service {
     private WindowManager windowManager;
     private ImageView chatHead;
     private TextView textBubble;
-    private WindowManager.LayoutParams params;
+    private WindowManager.LayoutParams chatParams;
+    private WindowManager.LayoutParams textParams;
     private Handler checkActivityHandler;
 
     private Map<String, Integer> activityTime;
@@ -55,34 +56,44 @@ public class ChatHeadService extends Service {
         chatHead.setBackgroundResource(R.drawable.bombomb0);
         bombOmbAnimation = (AnimationDrawable) chatHead.getBackground();
         chatHead.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                AnimationDrawable frameAnimation =
-                                        (AnimationDrawable) chatHead.getBackground();
-                                frameAnimation.start();
-                            }
-                        });
+            @Override
+            public void run() {
+                AnimationDrawable frameAnimation =
+                        (AnimationDrawable) chatHead.getBackground();
+                frameAnimation.start();
+            }
+        });
 
 
         textBubble = new TextView(this);
+        textBubble.setMaxEms(10);
         textBubble.setPadding(10, 10, 10, 10);
         textBubble.setBackgroundColor(Color.LTGRAY);
         textBubble.setTextColor(Color.BLACK);
         textBubble.setText("It's Mario! This is a really long sentence.");
 
-        params = new WindowManager.LayoutParams(
+        chatParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        textParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.x = 0;
-        params.y = 100;
+        chatParams.gravity = Gravity.TOP | Gravity.LEFT;
+        chatParams.x = 0;
+        chatParams.y = 100;
+        textParams.gravity = Gravity.TOP | Gravity.LEFT;
+        textParams.x = 0;
+        textParams.y = 0;
 
-        windowManager.addView(chatHead, params);
-        windowManager.addView(textBubble, params);
+        windowManager.addView(chatHead, chatParams);
+        windowManager.addView(textBubble, textParams);
 
         chatHead.setOnTouchListener(moveChatHead);
 
@@ -102,38 +113,43 @@ public class ChatHeadService extends Service {
         public void run()
         {
             if(autonomousMode) {
-                if (params.x > windowManager.getDefaultDisplay().getWidth() - chatHead.getWidth()
+                if (chatParams.x > windowManager.getDefaultDisplay().getWidth() - chatHead.getWidth()
                         && direction == Direction.RIGHT) direction = Direction.DOWN;
-                else if (params.y > windowManager.getDefaultDisplay().getHeight() - chatHead.getHeight()
+                else if (chatParams.y > windowManager.getDefaultDisplay().getHeight() - chatHead.getHeight()
                         && direction == Direction.DOWN) direction = Direction.LEFT;
-                else if (params.x < 0 && direction == Direction.LEFT) direction = Direction.UP;
-                else if (params.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
+                else if (chatParams.x < 0 && direction == Direction.LEFT) direction = Direction.UP;
+                else if (chatParams.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
 
                 switch (direction) {
-                    case UP: params.y -= 10; break;
-                    case LEFT: params.x -= 10; break;
-                    case RIGHT: params.x += 10; break;
-                    case DOWN: params.y += 10; break;
+                    case UP: chatParams.y -= 10; textParams.y -= 10; break;
+                    case LEFT: chatParams.x -= 10; textParams.x -=10; break;
+                    case RIGHT: chatParams.x += 10; textParams.x += 10; break;
+                    case DOWN: chatParams.y += 10; textParams.y += 10; break;
                 }
 
-                windowManager.updateViewLayout(chatHead, params);
-                windowManager.updateViewLayout(textBubble, params);
+                windowManager.updateViewLayout(chatHead, chatParams);
+                windowManager.updateViewLayout(textBubble, textParams);
             }
             autonomousHandler.postDelayed(this, 10);
         }
     };
 
     private View.OnTouchListener moveChatHead = new View.OnTouchListener() {
-        private int initialX;
-        private int initialY;
+        private int initialChatX;
+        private int initialChatY;
+        private int initialTextX;
+        private int initialTextY;
+
         private float initialTouchX;
         private float initialTouchY;
 
         @Override public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    initialX = params.x;
-                    initialY = params.y;
+                    initialChatX = chatParams.x;
+                    initialChatY = chatParams.y;
+                    initialTextX = chatParams.x;
+                    initialTextY = chatParams.y;
                     initialTouchX = event.getRawX();
                     initialTouchY = event.getRawY();
                     autonomousMode = false;
@@ -142,10 +158,12 @@ public class ChatHeadService extends Service {
                     autonomousMode = true;
                     return true;
                 case MotionEvent.ACTION_MOVE:
-                    params.x = initialX + (int) (event.getRawX() - initialTouchX);
-                    params.y = initialY + (int) (event.getRawY() - initialTouchY);
-                    windowManager.updateViewLayout(chatHead, params);
-                    windowManager.updateViewLayout(textBubble, params);
+                    chatParams.x = initialChatX + (int) (event.getRawX() - initialTouchX);
+                    chatParams.y = initialChatY + (int) (event.getRawY() - initialTouchY);
+                    textParams.x = initialTextX + (int) (event.getRawX() - initialTouchX);
+                    textParams.y = initialTextY + (int) (event.getRawY() - initialTouchY);
+                    windowManager.updateViewLayout(chatHead, chatParams);
+                    windowManager.updateViewLayout(textBubble, textParams);
                     return true;
             }
             return false;
@@ -164,7 +182,7 @@ public class ChatHeadService extends Service {
             if (previousActivity == null) {
                 firstActivatedActivityTime.put(currentActivity, 0);
                 activityTime.put(currentActivity, 1);
-            } else if (previousActivity == currentActivity) {
+            } else if (previousActivity.equals(currentActivity)) {
                 if (activityTime.containsKey(currentActivity)) {
                     activityTime.put(currentActivity, activityTime.get(currentActivity)+1);
                 } else {
@@ -190,12 +208,13 @@ public class ChatHeadService extends Service {
                 if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
                     Integer timeOnActivity = activityTime.get(currentActivity);
                     if (timeOnActivity > 5) {
-                        Log.d("cw", "YOU'VED WASTED " + timeOnActivity + " SECONDS ALREADY ON " + currentActivity + " ALREADY");
+                        Log.d("cw", "YOU'VED WASTED " + timeOnActivity + " SECONDS ON" + currentActivity + " ALREADY");
+                        textBubble.setText("YOU'VED WASTED " + timeOnActivity + " SECONDS ON" + currentActivity + " ALREADY");
                     }
                 }
             }
             previousActivity = currentActivity;
-            Log.d("chris", currentActivity + " " + activityTime.get(currentActivity));
+            //Log.d("chris", currentActivity + " " + activityTime.get(currentActivity));
             checkActivityHandler.postDelayed(this, 1000);
         }
 
