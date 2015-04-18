@@ -76,7 +76,8 @@ public class ChatHeadService extends Service {
         textBubble.setPadding(10, 10, 10, 10);
         textBubble.setBackgroundColor(Color.LTGRAY);
         textBubble.setTextColor(Color.BLACK);
-        textBubble.setText("It's Mario! This is a really long sentence.");
+        textBubble.setVisibility(View.VISIBLE);
+        //textBubble.setText("It's Mario! This is a really long sentence.");
 
         chatParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -254,6 +255,7 @@ public class ChatHeadService extends Service {
     {
         //bombOmbAnimation.start();
         String previousActivity = null;
+        int textShow = 0;
         @Override
         public void run()
         {
@@ -274,9 +276,13 @@ public class ChatHeadService extends Service {
                     if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
                         if (timeDiff == 10) {
                             Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
-                            textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " CONSECUATIVE SECONDS");
+                            textBubble.setVisibility(View.VISIBLE);
+                            textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                            textShow = activityTime.get(currentActivity);
                         } else if (timeDiff >= 30 && timeDiff % 5 == 0) {
+                            textBubble.setVisibility(View.VISIBLE);
                             textBubble.setText("CLOSE THE DAMN APP.");
+                            textShow = activityTime.get(currentActivity);
                             if (mBound) {
                                 mService.playSound(1, 1.0f);
                             }
@@ -294,16 +300,34 @@ public class ChatHeadService extends Service {
                 }
                 if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
                     Integer timeOnActivity = activityTime.get(currentActivity);
-                    if (timeOnActivity > 5) {
+                    if (timeOnActivity <= 5) {
+                        textBubble.setVisibility(View.VISIBLE);
+                        textBubble.setText("I'M DISAPPOINTED IN YOU");
+                        textShow = activityTime.get(currentActivity);
+                    }else if (timeOnActivity > 5) {
                         Log.d("cw", "YOU'VED WASTED " + timeOnActivity + " SECONDS ON" + currentActivity + " ALREADY");
+                        textBubble.setVisibility(View.VISIBLE);
                         textBubble.setText("YOU'VED WASTED " + timeOnActivity + " SECONDS ON" + currentActivity + " ALREADY");
+                        textShow = activityTime.get(currentActivity);
                     }
+                } else if (Arrays.asList(badPrograms).contains(previousActivity) && !Arrays.asList(badPrograms).contains(currentActivity)) {
+                    textBubble.setVisibility(View.VISIBLE);
+                    textBubble.setText("THANKS FOR CLOSING THE DAMN APP");
+                    textShow = activityTime.get(currentActivity);
                 }
             }
             previousActivity = currentActivity;
             //Log.d("chris", currentActivity + " " + activityTime.get(currentActivity));
             checkActivityHandler.postDelayed(this, 1000);
+
+            if (activityTime.containsKey(currentActivity)){
+                if (activityTime.get(currentActivity) - textShow == 5) {
+                    textBubble.setVisibility(View.GONE);
+                }
+            }
+
         }
+
 
     };
 
