@@ -12,8 +12,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.os.Handler;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by richard on 4/17/15.
@@ -23,6 +26,9 @@ public class ChatHeadService extends Service {
     private ImageView chatHead;
 
     private WindowManager.LayoutParams params;
+    private Handler checkActivityHandler;
+
+    private Map<String, Integer> activityTime;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -53,6 +59,10 @@ public class ChatHeadService extends Service {
 
         chatHead.setOnTouchListener(moveChatHead);
 
+
+        checkActivityHandler = new Handler();
+        checkActivityHandler.postDelayed(checkActivity, 0);
+        activityTime = new HashMap<String, Integer>();
     }
 
     private View.OnTouchListener moveChatHead = new View.OnTouchListener() {
@@ -91,9 +101,33 @@ public class ChatHeadService extends Service {
         }
     };
 
+    private Runnable checkActivity = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            String currentProcess = getForegroundActivityName();
+            if (activityTime.containsKey(currentProcess)) {
+                activityTime.put(currentProcess, activityTime.get(currentProcess) + 1);
+            } else {
+                activityTime.put(currentProcess, 1);
+            }
+            Log.d("chris", currentProcess + " " + activityTime.get(currentProcess));
+            checkActivityHandler.postDelayed(this, 1000);
+        }
+
+    };
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (chatHead != null) windowManager.removeView(chatHead);
+    }
+
+    private String getForegroundActivityName() {
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+
+        return appProcesses.get(0).processName;
     }
 }
