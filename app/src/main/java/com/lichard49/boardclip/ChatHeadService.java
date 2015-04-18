@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Handler;
@@ -15,11 +16,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.os.Handler;
+import android.widget.TextView;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +27,7 @@ import java.util.Map;
 public class ChatHeadService extends Service {
     private WindowManager windowManager;
     private ImageView chatHead;
+    private TextView textBubble;
     private WindowManager.LayoutParams params;
     private Handler checkActivityHandler;
 
@@ -63,6 +64,12 @@ public class ChatHeadService extends Service {
                         });
 
 
+        textBubble = new TextView(this);
+        textBubble.setPadding(10, 10, 10, 10);
+        textBubble.setBackgroundColor(Color.LTGRAY);
+        textBubble.setTextColor(Color.BLACK);
+        textBubble.setText("It's Mario! This is a really long sentence.");
+
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -75,6 +82,7 @@ public class ChatHeadService extends Service {
         params.y = 100;
 
         windowManager.addView(chatHead, params);
+        windowManager.addView(textBubble, params);
 
         chatHead.setOnTouchListener(moveChatHead);
 
@@ -85,6 +93,7 @@ public class ChatHeadService extends Service {
         firstActivatedActivityTime = new HashMap<String, Integer>();
     }
 
+    private boolean autonomousMode = true;
     enum Direction { UP, LEFT, RIGHT, DOWN };
     private Runnable moveAutonomous = new Runnable()
     {
@@ -92,23 +101,24 @@ public class ChatHeadService extends Service {
         @Override
         public void run()
         {
-            if(params.x > windowManager.getDefaultDisplay().getWidth()-chatHead.getWidth()
-                    && direction == Direction.RIGHT) direction = Direction.DOWN;
-            else if(params.y > windowManager.getDefaultDisplay().getHeight()-chatHead.getHeight()
-                    && direction == Direction.DOWN) direction = Direction.LEFT;
-            else if(params.x < 0 && direction == Direction.LEFT) direction = Direction.UP;
-            else if(params.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
+            if(autonomousMode) {
+                if (params.x > windowManager.getDefaultDisplay().getWidth() - chatHead.getWidth()
+                        && direction == Direction.RIGHT) direction = Direction.DOWN;
+                else if (params.y > windowManager.getDefaultDisplay().getHeight() - chatHead.getHeight()
+                        && direction == Direction.DOWN) direction = Direction.LEFT;
+                else if (params.x < 0 && direction == Direction.LEFT) direction = Direction.UP;
+                else if (params.y < 0 && direction == Direction.UP) direction = Direction.RIGHT;
 
-            switch(direction)
-            {
-                case UP: params.y -= 10; break;
-                case LEFT: params.x -= 10; break;
-                case RIGHT: params.x += 10; break;
-                case DOWN: params.y += 10; break;
+                switch (direction) {
+                    case UP: params.y -= 10; break;
+                    case LEFT: params.x -= 10; break;
+                    case RIGHT: params.x += 10; break;
+                    case DOWN: params.y += 10; break;
+                }
+
+                windowManager.updateViewLayout(chatHead, params);
+                windowManager.updateViewLayout(textBubble, params);
             }
-
-            windowManager.updateViewLayout(chatHead, params);
-            //Log.d("hiii", params.x+"");
             autonomousHandler.postDelayed(this, 10);
         }
     };
@@ -120,28 +130,22 @@ public class ChatHeadService extends Service {
         private float initialTouchY;
 
         @Override public boolean onTouch(View v, MotionEvent event) {
-            //ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            //List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
-
-            //Log.i("hiii", "about to list " + appProcesses.size() + " apps");
-            //for(ActivityManager.RunningAppProcessInfo a: appProcesses) {
-//                if(a.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                    //Log.i("hiii", "app: " + appProcesses.get(0).processName);
-//                }
-//            }
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     initialX = params.x;
                     initialY = params.y;
                     initialTouchX = event.getRawX();
                     initialTouchY = event.getRawY();
+                    autonomousMode = false;
                     return true;
                 case MotionEvent.ACTION_UP:
+                    autonomousMode = true;
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     params.x = initialX + (int) (event.getRawX() - initialTouchX);
                     params.y = initialY + (int) (event.getRawY() - initialTouchY);
                     windowManager.updateViewLayout(chatHead, params);
+                    windowManager.updateViewLayout(textBubble, params);
                     return true;
             }
             return false;
@@ -171,6 +175,7 @@ public class ChatHeadService extends Service {
                     Integer timeDiff = activityTime.get(currentActivity) - firstActivatedActivityTime.get(currentActivity);
                     if (timeDiff == 10) {
                         Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                        textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
                     }
                 }
 
@@ -209,7 +214,6 @@ public class ChatHeadService extends Service {
 
         ActivityManager am = (ActivityManager)this.getSystemService(ACTIVITY_SERVICE);
         List l = am.getRunningAppProcesses();
-        Iterator i = l.iterator();
         PackageManager pm = this.getPackageManager();
         try {
             CharSequence c = pm.getApplicationLabel(pm.getApplicationInfo(appProcesses.get(0).processName, PackageManager.GET_META_DATA));
