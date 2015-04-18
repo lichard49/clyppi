@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.os.Handler;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,8 @@ public class ChatHeadService extends Service {
     private Handler checkActivityHandler;
 
     private Map<String, Integer> activityTime;
+    private Map<String, Integer> firstActivatedActivityTime;
+    public static final String[] badPrograms = new String[] {"Messenger","Facebook","Tinder", "Hangouts"};
 
     private Handler autonomousHandler;
 
@@ -68,6 +71,7 @@ public class ChatHeadService extends Service {
         checkActivityHandler = new Handler();
         checkActivityHandler.postDelayed(checkActivity, 0);
         activityTime = new HashMap<String, Integer>();
+        firstActivatedActivityTime = new HashMap<String, Integer>();
     }
 
     enum Direction { UP, LEFT, RIGHT, DOWN };
@@ -135,15 +139,45 @@ public class ChatHeadService extends Service {
 
     private Runnable checkActivity = new Runnable()
     {
+        String previousActivity = null;
         @Override
         public void run()
         {
             String currentActivity = getForegroundActivityName();
-            if (activityTime.containsKey(currentActivity)) {
-                activityTime.put(currentActivity, activityTime.get(currentActivity) + 1);
-            } else {
+
+            if (previousActivity == null) {
+                firstActivatedActivityTime.put(currentActivity, 0);
                 activityTime.put(currentActivity, 1);
+            } else if (previousActivity == currentActivity) {
+                if (activityTime.containsKey(currentActivity)) {
+                    activityTime.put(currentActivity, activityTime.get(currentActivity)+1);
+                } else {
+                    activityTime.put(currentActivity, 1);
+                }
+
+                if (activityTime.containsKey(currentActivity) && firstActivatedActivityTime.containsKey(currentActivity)) {
+                    Integer timeDiff = activityTime.get(currentActivity) - firstActivatedActivityTime.get(currentActivity);
+                    if (timeDiff == 10) {
+                        Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                    }
+                }
+
+            } else {
+                if (activityTime.containsKey(currentActivity)) {
+                    firstActivatedActivityTime.put(currentActivity, activityTime.get(currentActivity));
+                    activityTime.put(currentActivity, activityTime.get(currentActivity)+1);
+                } else {
+                    firstActivatedActivityTime.put(currentActivity, 0);
+                    activityTime.put(currentActivity, 1);
+                }
+                if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
+                    Integer timeOnActivity = activityTime.get(currentActivity);
+                    if (timeOnActivity > 5) {
+                        Log.d("cw", "YOU'VED WASTED " + timeOnActivity + " SECONDS ALREADY ON " + currentActivity + " ALREADY");
+                    }
+                }
             }
+            previousActivity = currentActivity;
             Log.d("chris", currentActivity + " " + activityTime.get(currentActivity));
             checkActivityHandler.postDelayed(this, 1000);
         }
