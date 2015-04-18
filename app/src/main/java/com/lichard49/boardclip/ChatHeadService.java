@@ -2,8 +2,10 @@ package com.lichard49.boardclip;
 
 import android.app.ActivityManager;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -37,6 +39,10 @@ public class ChatHeadService extends Service {
 
     private Handler autonomousHandler;
     private AnimationDrawable bombOmbAnimation;
+
+    MusicService mService;
+    private boolean mBound;
+
     @Override
     public IBinder onBind(Intent intent) {
         // Not used
@@ -91,7 +97,28 @@ public class ChatHeadService extends Service {
         checkActivityHandler.postDelayed(checkActivity, 0);
         activityTime = new HashMap<String, Integer>();
         firstActivatedActivityTime = new HashMap<String, Integer>();
+
+        Intent intent = new Intent(this, MusicService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            MusicService.LocalBinder binder = (MusicService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     private boolean autonomousMode = true;
     enum Direction { UP, LEFT, RIGHT, DOWN };
@@ -130,6 +157,10 @@ public class ChatHeadService extends Service {
         private float initialTouchY;
 
         @Override public boolean onTouch(View v, MotionEvent event) {
+
+            if (mBound) {
+                mService.playSound(1, 1.0f);
+            }
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     initialX = params.x;

@@ -12,6 +12,7 @@
         android:theme="@style/AppTheme" >
 
         <service android:enabled="true" android:name="com.lichard49.boardclip.ChatHeadService" />
+        <service android:enabled="true" android:name="com.lichard49.boardclip.MusicService" />
 
         <activity
             android:name=".MainActivity"
