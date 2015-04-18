@@ -69,7 +69,6 @@ public class MusicService extends Service {
     public void soundPlay(int index){
 
         playSound(index, 1.0f);
-        Log.d("SOUND1", "hi1");
 
     }
 }

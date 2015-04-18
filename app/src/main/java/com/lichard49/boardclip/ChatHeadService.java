@@ -172,9 +172,6 @@ public class ChatHeadService extends Service {
 
         @Override public boolean onTouch(View v, MotionEvent event) {
 
-            if (mBound) {
-                mService.playSound(1, 1.0f);
-            }
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     initialChatX = chatParams.x;
@@ -222,9 +219,16 @@ public class ChatHeadService extends Service {
 
                 if (activityTime.containsKey(currentActivity) && firstActivatedActivityTime.containsKey(currentActivity)) {
                     Integer timeDiff = activityTime.get(currentActivity) - firstActivatedActivityTime.get(currentActivity);
-                    if (timeDiff == 10) {
-                        Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
-                        textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                    if (Arrays.asList(badPrograms).contains(currentActivity) && activityTime.containsKey(currentActivity)) {
+                        if (timeDiff == 10) {
+                            Log.d("cw", "GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                            textBubble.setText("GREAT YOU'VE BEEN ON " + currentActivity + " FOR " + timeDiff + " SECONDS");
+                        } else if (timeDiff >= 30 && timeDiff % 5 == 0) {
+                            textBubble.setText("CLOSE THE DAMN APP.");
+                            if (mBound) {
+                                mService.playSound(1, 1.0f);
+                            }
+                        }
                     }
                 }
 
