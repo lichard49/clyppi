@@ -1,7 +1,10 @@
 package com.lichard49.boardclip;
 
+import android.app.ActivityManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.IBinder;
@@ -14,12 +17,11 @@ import android.widget.ImageView;
 import android.os.Handler;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by richard on 4/17/15.
- */
+
 public class ChatHeadService extends Service {
     private WindowManager windowManager;
     private ImageView chatHead;
@@ -112,7 +114,6 @@ public class ChatHeadService extends Service {
                     //Log.i("hiii", "app: " + appProcesses.get(0).processName);
 //                }
 //            }
-            Log.i("hiii", "done");
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     initialX = params.x;
@@ -137,13 +138,13 @@ public class ChatHeadService extends Service {
         @Override
         public void run()
         {
-            String currentProcess = getForegroundActivityName();
-            if (activityTime.containsKey(currentProcess)) {
-                activityTime.put(currentProcess, activityTime.get(currentProcess) + 1);
+            String currentActivity = getForegroundActivityName();
+            if (activityTime.containsKey(currentActivity)) {
+                activityTime.put(currentActivity, activityTime.get(currentActivity) + 1);
             } else {
-                activityTime.put(currentProcess, 1);
+                activityTime.put(currentActivity, 1);
             }
-            Log.d("chris", currentProcess + " " + activityTime.get(currentProcess));
+            Log.d("chris", currentActivity + " " + activityTime.get(currentActivity));
             checkActivityHandler.postDelayed(this, 1000);
         }
 
@@ -158,7 +159,17 @@ public class ChatHeadService extends Service {
     private String getForegroundActivityName() {
         ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+        //Log.d("cw", appProcesses.get(0).getClass().getSimpleName());
 
-        return appProcesses.get(0).processName;
+        ActivityManager am = (ActivityManager)this.getSystemService(ACTIVITY_SERVICE);
+        List l = am.getRunningAppProcesses();
+        Iterator i = l.iterator();
+        PackageManager pm = this.getPackageManager();
+        try {
+            CharSequence c = pm.getApplicationLabel(pm.getApplicationInfo(appProcesses.get(0).processName, PackageManager.GET_META_DATA));
+            return c.toString();
+        }catch(Exception e) {
+            return null;
+        }
     }
 }
